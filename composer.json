@@ -1,0 +1,36 @@
+{
+	"name": "rob006/ranges",
+	"description": "A simple library for operating on ranges (numbers and dates)",
+	"keywords": [
+		"range",
+		"collection",
+		"date",
+		"number"
+	],
+	"type": "library",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Robert Korulczyk",
+			"email": "robert@korulczyk.pl",
+			"homepage": "https://rob006.net/"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/rob006-software/ranges/issues",
+		"source": "https://github.com/rob006-software/ranges"
+	},
+	"require": {
+		"php": "^7.1"
+	},
+	"autoload": {
+		"psr-4": {
+			"rob006\\ranges\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"rob006\\ranges\\tests\\": "tests/"
+		}
+	}
+}
