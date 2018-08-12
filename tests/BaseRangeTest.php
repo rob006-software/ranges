@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the rob006/ranges package.
  *
@@ -34,8 +36,12 @@ abstract class BaseRangeTest extends TestCase {
 	 */
 	public function testSimpleOverlapOnExcluding($source, $excluded, $expected) {
 		$source->exclude($excluded);
-		$this->assertSame($expected->getFrom(), $source->getFrom(), 'from');
-		$this->assertSame($expected->getTo(), $source->getTo(), 'to');
+		$this->compareRanges($source, $expected);
+	}
+
+	protected function compareRanges(RangeInterface $range, RangeInterface $expected) {
+		$this->assertSame($expected->getFrom(), $range->getFrom(), 'from');
+		$this->assertSame($expected->getTo(), $range->getTo(), 'to');
 	}
 
 	public function simpleOverlapOnExcludingDataProvider() {
@@ -160,7 +166,293 @@ abstract class BaseRangeTest extends TestCase {
 			'split' => [
 				$this->createRange($this->value('-10 days'), $this->value('-5 days')),
 				$this->createRange($this->value('-8 days'), $this->value('-6 days')),
-				new RangeSplitException('@todo collection'),
+				new RangeSplitException(
+					"Range was split into two ranges after excluding {$this->createRange($this->value('-8 days'), $this->value('-6 days'))} from {$this->createRange($this->value('-10 days'), $this->value('-5 days'))}",
+					$this->createRange($this->value('-10 days'), $this->value('-5 days')),
+					$this->createRange($this->value('-8 days'), $this->value('-6 days'))
+				),
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider simpleOverlapOnMergingDataProvider()
+	 *
+	 * @param RangeInterface $source
+	 * @param RangeInterface $merged
+	 * @param RangeInterface $expected
+	 */
+	public function testSimpleOverlapOnMerging($source, $merged, $expected) {
+		$sourceClone = clone $source;
+		$sourceClone->merge($merged);
+		$this->compareRanges($sourceClone, $expected);
+
+		// order of merging should change result
+		$mergedClone = clone $merged;
+		$mergedClone->merge($source);
+		$this->compareRanges($mergedClone, $expected);
+	}
+
+	public function simpleOverlapOnMergingDataProvider() {
+		return [
+			'end range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-6 days'), null),
+				$this->createRange($this->value('-7 days'), null),
+			],
+			'end range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days'), null),
+				$this->createRange($this->value('-7 days'), null),
+			],
+			'end range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days', -1), null),
+				$this->createRange($this->value('-7 days'), null),
+			],
+			'end range overlap with infinity' => [
+				$this->createRange($this->value('-7 days'), null),
+				$this->createRange($this->value('-6 days'), null),
+				$this->createRange($this->value('-7 days'), null),
+			],
+			'begin range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-10 days'), $this->value('-6 days')),
+				$this->createRange($this->value('-10 days'), $this->value('-5 days')),
+			],
+			'begin range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days')),
+				$this->createRange(null, $this->value('-5 days')),
+			],
+			'begin range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days', 1)),
+				$this->createRange(null, $this->value('-5 days')),
+			],
+			'begin range overlap with infinity' => [
+				$this->createRange(null, $this->value('-5 days')),
+				$this->createRange(null, $this->value('-6 days')),
+				$this->createRange(null, $this->value('-5 days')),
+			],
+			'merge infinity from beginning' => [
+				$this->createRange(null, null),
+				$this->createRange(null, $this->value('-6 days')),
+				$this->createRange(null, null),
+			],
+			'merge infinity from end' => [
+				$this->createRange(null, null),
+				$this->createRange($this->value('-6 days'), null),
+				$this->createRange(null, null),
+			],
+			'infinity war' => [
+				$this->createRange(null, null),
+				$this->createRange(null, null),
+				$this->createRange(null, null),
+			],
+			'full overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange($this->value('-8 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-8 days'), $this->value('-5 days')),
+			],
+			'full overlap by infinity' => [
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange(null, null),
+				$this->createRange(null, null),
+			],
+			'full overlap by infinity from beginning' => [
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange(null, $this->value('-5 days')),
+				$this->createRange(null, $this->value('-5 days')),
+			],
+			'full overlap by infinity from end' => [
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange($this->value('-8 days'), null),
+				$this->createRange($this->value('-8 days'), null),
+			],
+			'full overlap by equal range' => [
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+				$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider overlapsOnMergingResultingExceptionsDataProvider()
+	 *
+	 * @param RangeInterface $source
+	 * @param RangeInterface $excluded
+	 */
+	public function testOverlapOnMergingResultingExceptions($source, $excluded) {
+		$this->expectExceptionObject(new RangeSplitException(
+			"Ranges $source and $excluded cannot be merged into one.",
+			$source,
+			$excluded
+		));
+		$source->merge($excluded);
+	}
+
+	/**
+	 * @dataProvider overlapsOnMergingResultingExceptionsDataProvider()
+	 *
+	 * @param RangeInterface $source
+	 * @param RangeInterface $excluded
+	 */
+	public function testOverlapOnMergingResultingExceptionsReverse($source, $excluded) {
+		$this->expectExceptionObject(new RangeSplitException(
+			"Ranges $excluded and $source cannot be merged into one.",
+			$excluded,
+			$source
+		));
+		$excluded->merge($source);
+	}
+
+	public function overlapsOnMergingResultingExceptionsDataProvider() {
+		return [
+			'no overlap from end' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+			],
+			'no overlap from end with infinity 1' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+			],
+			'no overlap from end with infinity 2' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+			],
+			'no overlap from end with infinity 3' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+			],
+			'no overlap from beginning' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+			],
+			'no overlap from beginning with infinity 1' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange(null, $this->value('-13 days')),
+			],
+			'no overlap from beginning with infinity 2' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+			],
+			'no overlap from beginning with infinity 3' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange(null, $this->value('-13 days')),
+			],
+		];
+	}
+
+	/**
+	 * @dataProvider compareDataProvider()
+	 *
+	 * @param RangeInterface $range1
+	 * @param RangeInterface $range2
+	 * @param int $result
+	 */
+	public function testCompare(RangeInterface $range1, RangeInterface $range2, int $result) {
+		$this->assertSame($range1->compare($range2), $result);
+		$this->assertSame($range2->compare($range1), 0 - $result);
+	}
+
+	public function compareDataProvider() {
+		return [
+			'end range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'end range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days'), null),
+				0,
+			],
+			'end range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days', -1), null),
+				0,
+			],
+			'end range overlap with infinity' => [
+				$this->createRange($this->value('-7 days'), null),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'begin range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-10 days'), $this->value('-6 days')),
+				0,
+			],
+			'begin range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days')),
+				0,
+			],
+			'begin range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days', 1)),
+				0,
+			],
+			'begin range overlap with infinity' => [
+				$this->createRange(null, $this->value('-5 days')),
+				$this->createRange(null, $this->value('-6 days')),
+				0,
+			],
+			'cut infinity from beginning' => [
+				$this->createRange(null, null),
+				$this->createRange(null, $this->value('-6 days')),
+				0,
+			],
+			'cut infinity from end' => [
+				$this->createRange(null, null),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'no overlap from end' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+				-1,
+			],
+			'no overlap from beginning' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+				1,
+			],
+			'full overlap' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-16 days'), $this->value('-1 days')),
+				0,
+			],
+			'no overlap from end with infinity 1' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+				-1,
+			],
+			'no overlap from end with infinity 2' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+				-1,
+			],
+			'no overlap from end with infinity 3' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+				-1,
+			],
+			'no overlap from beginning with infinity 1' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange(null, $this->value('-13 days')),
+				1,
+			],
+			'no overlap from beginning with infinity 2' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+				1,
+			],
+			'no overlap from beginning with infinity 3' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange(null, $this->value('-13 days')),
+				1,
 			],
 		];
 	}

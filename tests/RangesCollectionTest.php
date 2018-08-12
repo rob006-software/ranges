@@ -13,26 +13,27 @@ declare(strict_types=1);
 
 namespace rob006\ranges\tests;
 
-use rob006\ranges\DateTimeRange;
+use rob006\ranges\Range;
 use rob006\ranges\RangeInterface;
+use rob006\ranges\RangesCollection;
+use rob006\ranges\RangesCollectionInterface;
 
 /**
- * Class DateTimeRangeTest.
+ * Class RangesCollectionTest.
  *
  * @author Robert Korulczyk <robert@korulczyk.pl>
  */
-abstract class DateTimeRangeTest extends BaseRangeTest {
+class RangesCollectionTest extends BaseRangesCollectionTest {
 
-	protected function compareRanges(RangeInterface $range, RangeInterface $expected) {
-		parent::compareRanges($range, $expected);
+	protected function createCollection(): RangesCollectionInterface {
+		return new RangesCollection();
+	}
 
-		/* @var $expected DateTimeRange */
-		/* @var $range DateTimeRange */
-		$this->assertSame($expected->getFromDate(), $range->getFromDate(), 'from');
-		$this->assertSame($expected->getToDate(), $range->getToDate(), 'to');
+	protected function value(string $base, int $delay = 0) {
+		return strtotime($base, static::TIME) + $delay;
 	}
 
 	protected function createRange($from, $to): RangeInterface {
-		return new DateTimeRange($from, $to);
+		return new Range($from, $to);
 	}
 }

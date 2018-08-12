@@ -22,7 +22,15 @@ interface RangeInterface {
 
 	public function getFrom();
 
+	public function getNumericalFrom();
+
+	public function withFrom(?int $value): RangeInterface;
+
 	public function getTo();
+
+	public function getNumericalTo();
+
+	public function withTo(?int $value): RangeInterface;
 
 	public function getFromFormatted(): string;
 
@@ -31,6 +39,10 @@ interface RangeInterface {
 	public function getDuration();
 
 	public function isEmpty(): bool;
+
+	public function compare(RangeInterface $range): int;
+
+	public function merge(RangeInterface $range): void;
 
 	public function exclude(RangeInterface $range): void;
 }

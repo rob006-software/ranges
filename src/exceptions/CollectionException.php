@@ -14,14 +14,15 @@ declare(strict_types=1);
 namespace rob006\ranges\exceptions;
 
 use Exception;
+use rob006\ranges\RangesCollection;
 
 /**
- * Base exception for Range entity operations.
+ * Base exception for operations performed by RangesCollection.
  *
- * @see Range
+ * @see RangesCollection
  *
  * @author Robert Korulczyk <robert@korulczyk.pl>
  */
-abstract class RangeException extends Exception {
+abstract class CollectionException extends Exception {
 
 }

@@ -11,17 +11,18 @@ declare(strict_types=1);
  * please view the LICENSE file that was distributed with this source code.
  */
 
-namespace rob006\ranges\exceptions;
+namespace rob006\ranges\tests;
 
-use Exception;
+use DateTime;
 
 /**
- * Base exception for Range entity operations.
- *
- * @see Range
+ * Class DateTimeRangesCollectionDateTimeTest.
  *
  * @author Robert Korulczyk <robert@korulczyk.pl>
  */
-abstract class RangeException extends Exception {
+class DateTimeRangesCollectionDateTimeTest extends DateTimeRangesCollectionTest {
 
+	protected function value(string $base, int $delay = 0) {
+		return (new DateTime())->setTimestamp(strtotime($base, static::TIME) + $delay);
+	}
 }

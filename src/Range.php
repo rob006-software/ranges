@@ -49,6 +49,34 @@ class Range implements RangeInterface {
 		return "{$this->getFromFormatted()} - {$this->getToFormatted()}";
 	}
 
+	public function getFrom(): ?int {
+		return $this->from;
+	}
+
+	public function getNumericalFrom() {
+		return $this->from ?? -INF;
+	}
+
+	public function withFrom(?int $value): RangeInterface {
+		$clone = clone $this;
+		$clone->from = $value;
+		return $clone;
+	}
+
+	public function getTo(): ?int {
+		return $this->to;
+	}
+
+	public function getNumericalTo() {
+		return $this->to ?? INF;
+	}
+
+	public function withTo(?int $value): RangeInterface {
+		$clone = clone $this;
+		$clone->to = $value;
+		return $clone;
+	}
+
 	public function getFromFormatted(): string {
 		return $this->from !== null ? (string) $this->from : 'infinity';
 	}
@@ -66,41 +94,74 @@ class Range implements RangeInterface {
 	 * @throws RangeWipedOutException
 	 */
 	public function exclude(RangeInterface $range): void {
-		$clone = clone $this;
 		if (
-			self::compare($clone->from, $range->getFrom(), true) > 0
-			&& self::compare($clone->to, $range->getTo()) < 0
+			$this->getNumericalFrom() < $range->getNumericalFrom()
+			&& $this->getNumericalTo() > $range->getNumericalTo()
 		) {
-			throw new RangeSplitException('@todo collection');
+			throw new RangeSplitException(
+				"Range was split into two ranges after excluding $range from $this.",
+				$this->withTo($range->getFrom()),
+				$this->withFrom($range->getTo())
+			);
 		}
 
-		// cut from the end
 		if (
-			self::compare($clone->to, $range->getTo()) >= 0
-			&& self::compare($clone->to, $range->getFrom()) <= 0
+			$this->getNumericalFrom() >= $range->getNumericalFrom()
+			&& $this->getNumericalTo() <= $range->getNumericalTo()
 		) {
-			$clone->to = $range->getFrom();
-		}
-		// cut from the beginning
-		if (
-			self::compare($clone->from, $range->getFrom(), true) <= 0
-			&& self::compare($clone->from, $range->getTo(), true) >= 0
-		) {
-			$clone->from = $range->getTo();
-		}
-
-		// wipe out by infinity
-		if ($range->getFrom() === null && $range->getTo() === null) {
-			$clone->from = 0;
-			$clone->to = 0;
-		}
-
-		if ($clone->isEmpty()) {
 			throw new RangeWipedOutException("Range was wiped out after excluding range: $range.");
 		}
 
-		$this->from = $clone->from;
-		$this->to = $clone->to;
+		// cut from the end
+		/* @noinspection NotOptimalIfConditionsInspection */
+		if (
+			$this->getNumericalTo() <= $range->getNumericalTo()
+			&& $this->getNumericalTo() >= $range->getNumericalFrom()
+		) {
+			$this->to = $range->getFrom();
+		}
+		// cut from the beginning
+		/* @noinspection NotOptimalIfConditionsInspection */
+		if (
+			$this->getNumericalFrom() >= $range->getNumericalFrom()
+			&& $this->getNumericalFrom() <= $range->getNumericalTo()
+		) {
+			$this->from = $range->getTo();
+		}
+	}
+
+	/**
+	 * @param RangeInterface $range
+	 * @throws RangeSplitException
+	 */
+	public function merge(RangeInterface $range): void {
+		if ($this->compare($range) !== 0) {
+			throw new RangeSplitException(
+				"Ranges $this and $range cannot be merged into one.",
+				$this,
+				$range
+			);
+		}
+
+		// extend from the end
+		if ($this->getNumericalTo() < $range->getNumericalTo()) {
+			$this->to = $range->getTo();
+		}
+		// extend from the beginning
+		if ($this->getNumericalFrom() > $range->getNumericalFrom()) {
+			$this->from = $range->getFrom();
+		}
+	}
+
+	public function compare(RangeInterface $range): int {
+		if ($this->getNumericalTo() < $range->getNumericalFrom()) {
+			return -1;
+		}
+		if ($this->getNumericalFrom() > $range->getNumericalTo()) {
+			return 1;
+		}
+
+		return 0;
 	}
 
 	public function isEmpty(): bool {
@@ -112,40 +173,6 @@ class Range implements RangeInterface {
 			return INF;
 		}
 
-		return self::compare($this->from, $this->to);
-	}
-
-	public function getFrom(): ?int {
-		return $this->from;
-	}
-
-	public function getTo(): ?int {
-		return $this->to;
-	}
-
-	/**
-	 * Compare 2 values:
-	 * - `0` if values are the same
-	 * - positive integer if $value is greater that $base
-	 * - negative integer if $value is lower that $base
-	 *
-	 * @param int|null $base
-	 * @param int|null $value
-	 * @param bool $minus
-	 * @return int|float
-	 */
-	private static function compare(?int $base, ?int $value, bool $minus = false) {
-		if ($base === $value) {
-			return 0;
-		}
-
-		if ($base === null) {
-			return $minus ? INF : -INF;
-		}
-		if ($value === null) {
-			return $minus ? -INF : INF;
-		}
-
-		return $value - $base;
+		return $this->to - $this->from;
 	}
 }

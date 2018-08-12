@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace rob006\ranges\exceptions;
 
+use rob006\ranges\RangeInterface;
+use Throwable;
+
 /**
  * Exception thrown when excluding range resulting in split one range into two ranges.
  *
@@ -20,4 +23,24 @@ namespace rob006\ranges\exceptions;
  */
 class RangeSplitException extends RangeException {
 
+	private $ranges;
+
+	public function __construct(
+		string $message,
+		RangeInterface $range1,
+		RangeInterface $range2,
+		int $code = 0,
+		Throwable $previous = null
+	) {
+		$this->ranges = [$range1, $range2];
+
+		parent::__construct($message, $code, $previous);
+	}
+
+	/**
+	 * @return RangeInterface[]
+	 */
+	public function getRanges(): array {
+		return $this->ranges;
+	}
 }

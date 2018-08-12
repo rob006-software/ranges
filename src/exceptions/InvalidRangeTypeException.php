@@ -13,15 +13,11 @@ declare(strict_types=1);
 
 namespace rob006\ranges\exceptions;
 
-use Exception;
-
 /**
- * Base exception for Range entity operations.
- *
- * @see Range
+ * Exception thrown whe invalid Range is passed to Collection.
  *
  * @author Robert Korulczyk <robert@korulczyk.pl>
  */
-abstract class RangeException extends Exception {
+class InvalidRangeTypeException extends CollectionException {
 
 }
