@@ -147,7 +147,7 @@ class RangesCollection implements RangesCollectionInterface, Iterator, Countable
 	}
 
 	public function valid() {
-		return isset($this->array[$this->position]);
+		return isset($this->ranges[$this->position]);
 	}
 
 	public function count() {

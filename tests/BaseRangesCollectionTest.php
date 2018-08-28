@@ -492,6 +492,39 @@ abstract class BaseRangesCollectionTest extends TestCase {
 		];
 	}
 
+	public function testIteratorInterface() {
+		$collection = $this->createCollection();
+		$ranges = [
+			$this->createRange($this->value('-12 days'), $this->value('-11 days')),
+			$this->createRange($this->value('-10 days'), $this->value('-9 days')),
+			$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+			$this->createRange($this->value('-5 days'), $this->value('-4 days')),
+		];
+		$collection->addMultiple($ranges);
+
+		$count = 0;
+		foreach ($collection as $index => $range) {
+			$this->assertSame($ranges[$index], $range);
+			$count++;
+		}
+
+		$this->assertSame(4, $count);
+	}
+
+	public function testCountableInterface() {
+		$collection = $this->createCollection();
+		$ranges = [
+			$this->createRange($this->value('-12 days'), $this->value('-11 days')),
+			$this->createRange($this->value('-10 days'), $this->value('-9 days')),
+			$this->createRange($this->value('-7 days'), $this->value('-6 days')),
+			$this->createRange($this->value('-5 days'), $this->value('-4 days')),
+		];
+		$collection->addMultiple($ranges);
+
+		/* @noinspection PhpParamsInspection */
+		$this->assertCount(4, $collection);
+	}
+
 	abstract protected function createCollection(): RangesCollectionInterface;
 
 	abstract protected function createRange($from, $to): RangeInterface;
