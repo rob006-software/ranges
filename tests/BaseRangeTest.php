@@ -184,12 +184,12 @@ abstract class BaseRangeTest extends TestCase {
 	 */
 	public function testSimpleOverlapOnMerging($source, $merged, $expected) {
 		$sourceClone = clone $source;
-		$sourceClone->merge($merged);
+		$sourceClone->mergeWith($merged);
 		$this->compareRanges($sourceClone, $expected);
 
 		// order of merging should change result
 		$mergedClone = clone $merged;
-		$mergedClone->merge($source);
+		$mergedClone->mergeWith($source);
 		$this->compareRanges($mergedClone, $expected);
 	}
 
@@ -290,7 +290,7 @@ abstract class BaseRangeTest extends TestCase {
 			$source,
 			$excluded
 		));
-		$source->merge($excluded);
+		$source->mergeWith($excluded);
 	}
 
 	/**
@@ -305,7 +305,7 @@ abstract class BaseRangeTest extends TestCase {
 			$excluded,
 			$source
 		));
-		$excluded->merge($source);
+		$excluded->mergeWith($source);
 	}
 
 	public function overlapsOnMergingResultingExceptionsDataProvider() {
@@ -353,8 +353,8 @@ abstract class BaseRangeTest extends TestCase {
 	 * @param int $result
 	 */
 	public function testCompare(RangeInterface $range1, RangeInterface $range2, int $result) {
-		$this->assertSame($range1->compare($range2), $result);
-		$this->assertSame($range2->compare($range1), 0 - $result);
+		$this->assertSame($range1->compareWith($range2), $result);
+		$this->assertSame($range2->compareWith($range1), 0 - $result);
 	}
 
 	public function compareDataProvider() {
@@ -457,7 +457,123 @@ abstract class BaseRangeTest extends TestCase {
 		];
 	}
 
+	/**
+	 * @dataProvider gapDataProvider()
+	 *
+	 * @param RangeInterface $range1
+	 * @param RangeInterface $range2
+	 * @param int $result
+	 */
+	public function testGap(RangeInterface $range1, RangeInterface $range2, int $result) {
+		$this->assertSame($range1->getGapBetween($range2), $result);
+		$this->assertSame($range2->getGapBetween($range1), $result);
+	}
+
+	public function gapDataProvider() {
+		return [
+			'end range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'end range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days'), null),
+				0,
+			],
+			'end range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-5 days', -1), null),
+				0,
+			],
+			'end range overlap with infinity' => [
+				$this->createRange($this->value('-7 days'), null),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'begin range overlap' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange($this->value('-10 days'), $this->value('-6 days')),
+				0,
+			],
+			'begin range overlap (touch)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days')),
+				0,
+			],
+			'begin range overlap (1 second overlap)' => [
+				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
+				$this->createRange(null, $this->value('-7 days', 1)),
+				0,
+			],
+			'begin range overlap with infinity' => [
+				$this->createRange(null, $this->value('-5 days')),
+				$this->createRange(null, $this->value('-6 days')),
+				0,
+			],
+			'cut infinity from beginning' => [
+				$this->createRange(null, null),
+				$this->createRange(null, $this->value('-6 days')),
+				0,
+			],
+			'cut infinity from end' => [
+				$this->createRange(null, null),
+				$this->createRange($this->value('-6 days'), null),
+				0,
+			],
+			'no overlap from end' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+				$this->timestamp('-6 days') - $this->timestamp('-8 days'),
+			],
+			'no overlap from beginning' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+				$this->timestamp('-10 days') - $this->timestamp('-13 days'),
+			],
+			'full overlap' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-16 days'), $this->value('-1 days')),
+				0,
+			],
+			'no overlap from end with infinity 1' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), $this->value('-3 days')),
+				$this->timestamp('-6 days') - $this->timestamp('-8 days'),
+			],
+			'no overlap from end with infinity 2' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+				$this->timestamp('-6 days') - $this->timestamp('-8 days'),
+			],
+			'no overlap from end with infinity 3' => [
+				$this->createRange(null, $this->value('-8 days')),
+				$this->createRange($this->value('-6 days'), null),
+				$this->timestamp('-6 days') - $this->timestamp('-8 days'),
+			],
+			'no overlap from beginning with infinity 1' => [
+				$this->createRange($this->value('-10 days'), $this->value('-8 days')),
+				$this->createRange(null, $this->value('-13 days')),
+				$this->timestamp('-10 days') - $this->timestamp('-13 days'),
+			],
+			'no overlap from beginning with infinity 2' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange($this->value('-16 days'), $this->value('-13 days')),
+				$this->timestamp('-10 days') - $this->timestamp('-13 days'),
+			],
+			'no overlap from beginning with infinity 3' => [
+				$this->createRange($this->value('-10 days'), null),
+				$this->createRange(null, $this->value('-13 days')),
+				$this->timestamp('-10 days') - $this->timestamp('-13 days'),
+			],
+		];
+	}
+
 	abstract protected function createRange($from, $to): RangeInterface;
 
-	abstract protected function value(string $base, int $offset = 0);
+	abstract protected function value(string $base, int $delay = 0);
+
+	protected function timestamp(string $base, int $delay = 0) {
+		return strtotime($base, static::TIME) + $delay;
+	}
 }

@@ -24,7 +24,7 @@ use rob006\ranges\RangeInterface;
 class RangeTest extends BaseRangeTest {
 
 	protected function value(string $base, int $delay = 0) {
-		return strtotime($base, static::TIME) + $delay;
+		return $this->timestamp($base, $delay);
 	}
 
 	protected function createRange($from, $to): RangeInterface {

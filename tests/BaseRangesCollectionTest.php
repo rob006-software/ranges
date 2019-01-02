@@ -529,5 +529,5 @@ abstract class BaseRangesCollectionTest extends TestCase {
 
 	abstract protected function createRange($from, $to): RangeInterface;
 
-	abstract protected function value(string $base, int $offset = 0);
+	abstract protected function value(string $base, int $delay = 0);
 }
