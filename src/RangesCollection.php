@@ -63,19 +63,14 @@ class RangesCollection implements RangesCollectionInterface, Iterator, Countable
 		$ranges = [];
 		$pushed = false;
 		foreach ($this->ranges as $rangeKey => $existingRange) {
-			$compareResult = $range->compareWith($existingRange);
-			if ($compareResult <= 0) {
-				if (!$pushed) {
+			if ($range->getDistanceBetween($existingRange) > 0) {
+				if (!$pushed && $range->isPreceding($existingRange)) {
 					$ranges[] = $range;
 					$pushed = true;
 				}
-				if ($compareResult === 0) {
-					$overlapped[] = $existingRange;
-				} else {
-					$ranges[] = $existingRange;
-				}
-			} else {
 				$ranges[] = $existingRange;
+			} else {
+				$overlapped[] = $existingRange;
 			}
 		}
 

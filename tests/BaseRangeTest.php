@@ -353,8 +353,15 @@ abstract class BaseRangeTest extends TestCase {
 	 * @param int $result
 	 */
 	public function testCompare(RangeInterface $range1, RangeInterface $range2, int $result) {
-		$this->assertSame($range1->compareWith($range2), $result);
-		$this->assertSame($range2->compareWith($range1), 0 - $result);
+		static $methodsMap = [
+			-1 => 'isPreceding',
+			0 => 'isOverlapping',
+			1 => 'isFollowing',
+		];
+		$method = $methodsMap[$result];
+		$this->assertTrue($range1->$method($range2));
+		$method = $methodsMap[0 - $result];
+		$this->assertTrue($range2->$method($range1));
 	}
 
 	public function compareDataProvider() {
@@ -367,7 +374,7 @@ abstract class BaseRangeTest extends TestCase {
 			'end range overlap (touch)' => [
 				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
 				$this->createRange($this->value('-5 days'), null),
-				0,
+				-1,
 			],
 			'end range overlap (1 second overlap)' => [
 				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
@@ -387,7 +394,7 @@ abstract class BaseRangeTest extends TestCase {
 			'begin range overlap (touch)' => [
 				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
 				$this->createRange(null, $this->value('-7 days')),
-				0,
+				1,
 			],
 			'begin range overlap (1 second overlap)' => [
 				$this->createRange($this->value('-7 days'), $this->value('-5 days')),
@@ -458,18 +465,18 @@ abstract class BaseRangeTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider gapDataProvider()
+	 * @dataProvider distanceDataProvider()
 	 *
 	 * @param RangeInterface $range1
 	 * @param RangeInterface $range2
 	 * @param int $result
 	 */
-	public function testGap(RangeInterface $range1, RangeInterface $range2, int $result) {
-		$this->assertSame($range1->getGapBetween($range2), $result);
-		$this->assertSame($range2->getGapBetween($range1), $result);
+	public function testDistance(RangeInterface $range1, RangeInterface $range2, int $result) {
+		$this->assertSame($range1->getDistanceBetween($range2), $result);
+		$this->assertSame($range2->getDistanceBetween($range1), $result);
 	}
 
-	public function gapDataProvider() {
+	public function distanceDataProvider() {
 		return [
 			'end range overlap' => [
 				$this->createRange($this->value('-7 days'), $this->value('-5 days')),

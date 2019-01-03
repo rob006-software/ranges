@@ -135,7 +135,7 @@ class Range implements RangeInterface {
 	 * @throws RangeSplitException
 	 */
 	public function mergeWith(RangeInterface $range): void {
-		if ($this->compareWith($range) !== 0) {
+		if ($this->getDistanceBetween($range) > 0) {
 			throw new RangeSplitException(
 				"Ranges $this and $range cannot be merged into one.",
 				$this,
@@ -153,18 +153,30 @@ class Range implements RangeInterface {
 		}
 	}
 
-	public function compareWith(RangeInterface $range): int {
-		if ($this->getNumericalTo() < $range->getNumericalFrom()) {
+	private function compareWith(RangeInterface $range): int {
+		if ($this->getNumericalTo() <= $range->getNumericalFrom()) {
 			return -1;
 		}
-		if ($this->getNumericalFrom() > $range->getNumericalTo()) {
+		if ($this->getNumericalFrom() >= $range->getNumericalTo()) {
 			return 1;
 		}
 
 		return 0;
 	}
 
-	public function getGapBetween(RangeInterface $range) {
+	public function isPreceding(RangeInterface $range): bool {
+		return $this->compareWith($range) === -1;
+	}
+
+	public function isFollowing(RangeInterface $range): bool {
+		return $this->compareWith($range) === 1;
+	}
+
+	public function isOverlapping(RangeInterface $range): bool {
+		return $this->compareWith($range) === 0;
+	}
+
+	public function getDistanceBetween(RangeInterface $range) {
 		switch ($this->compareWith($range)) {
 			case -1:
 				return $range->getNumericalFrom() - $this->getNumericalTo();

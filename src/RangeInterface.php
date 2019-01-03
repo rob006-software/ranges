@@ -40,9 +40,13 @@ interface RangeInterface {
 
 	public function isEmpty(): bool;
 
-	public function compareWith(RangeInterface $range): int;
+	public function isPreceding(RangeInterface $range): bool;
 
-	public function getGapBetween(RangeInterface $range);
+	public function isFollowing(RangeInterface $range): bool;
+
+	public function isOverlapping(RangeInterface $range): bool;
+
+	public function getDistanceBetween(RangeInterface $range);
 
 	public function mergeWith(RangeInterface $range): void;
 
