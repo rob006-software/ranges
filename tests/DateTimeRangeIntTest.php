@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace rob006\ranges\tests;
 
+use rob006\ranges\DateTimeRange;
+
 /**
  * Class DateTimeRangeIntTest.
  *
@@ -22,5 +24,20 @@ class DateTimeRangeIntTest extends DateTimeRangeTest {
 
 	protected function value(string $base, int $delay = 0) {
 		return strtotime($base, static::TIME) + $delay;
+	}
+
+	public function testIsActive() {
+		/* @var $range DateTimeRange */
+		$range = $this->createRange($this->timestamp('-10 days'), $this->timestamp('-9 days'));
+		$this->assertTrue($range->isActive($this->timestamp('-10 days')));
+		$this->assertTrue($range->isActive($this->timestamp('-9 days')));
+		$this->assertTrue($range->isActive($this->timestamp('-10 days') + 1));
+		$this->assertTrue($range->isActive($this->timestamp('-9 days') - 1));
+		$this->assertFalse($range->isActive($this->timestamp('-10 days') - 1));
+		$this->assertFalse($range->isActive($this->timestamp('-9 days') + 1));
+
+		$range = $this->createRange(null, null);
+		$this->assertTrue($range->isActive($this->timestamp('-10 days')));
+		$this->assertTrue($range->isActive($this->timestamp('-9 days')));
 	}
 }

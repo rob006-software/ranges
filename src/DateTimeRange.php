@@ -75,4 +75,9 @@ class DateTimeRange extends Range {
 	public function getToDate(): ?string {
 		return $this->getTo() !== null ? date('Y-m-d H:i:s', $this->getTo()) : null;
 	}
+
+	public function isActive(?int $timestamp = null): bool {
+		$timestamp = $timestamp ?? time();
+		return $this->getNumericalFrom() <= $timestamp && $timestamp <= $this->getNumericalTo();
+	}
 }
