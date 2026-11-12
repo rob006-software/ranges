@@ -23,14 +23,17 @@ use Throwable;
  */
 class RangeSplitException extends RangeException {
 
-	private $ranges;
+	/**
+	 * @var RangeInterface[]
+	 */
+	private array $ranges;
 
 	public function __construct(
 		string $message,
 		RangeInterface $range1,
 		RangeInterface $range2,
 		int $code = 0,
-		Throwable $previous = null
+		?Throwable $previous = null
 	) {
 		$this->ranges = [$range1, $range2];
 

@@ -24,8 +24,8 @@ use rob006\ranges\exceptions\RangeWipedOutException;
  */
 class Range implements RangeInterface {
 
-	private $from;
-	private $to;
+	private ?int $from;
+	private ?int $to;
 
 	/**
 	 * Range constructor.

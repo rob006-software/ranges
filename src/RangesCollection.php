@@ -31,8 +31,8 @@ class RangesCollection implements RangesCollectionInterface, Iterator, Countable
 	/**
 	 * @var RangeInterface[]
 	 */
-	private $ranges = [];
-	private $position = 0;
+	private array $ranges = [];
+	private int $position = 0;
 
 	/**
 	 * RangesCollection constructor.
@@ -125,27 +125,27 @@ class RangesCollection implements RangesCollectionInterface, Iterator, Countable
 		return $this->ranges;
 	}
 
-	public function rewind() {
+	public function rewind(): void {
 		$this->position = 0;
 	}
 
-	public function current() {
-		return $this->ranges[$this->position];
+	public function current(): ?RangeInterface {
+		return $this->ranges[$this->position] ?? null;
 	}
 
-	public function key() {
+	public function key(): int {
 		return $this->position;
 	}
 
-	public function next() {
+	public function next(): void {
 		$this->position++;
 	}
 
-	public function valid() {
+	public function valid(): bool {
 		return isset($this->ranges[$this->position]);
 	}
 
-	public function count() {
+	public function count(): int {
 		return count($this->ranges);
 	}
 }
